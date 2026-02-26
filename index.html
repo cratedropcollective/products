@@ -7,7 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>[x-cloak] { display: none !important; }</style>
+    <style>
+        [x-cloak] { display: none !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
 <body class="bg-gray-50 font-sans text-slate-900" x-data="shop()" x-cloak>
 
@@ -24,12 +28,27 @@
         </div>
     </nav>
 
-    <div class="bg-white border-b border-gray-200 py-4 px-4 sticky top-[68px] z-40">
-        <div class="container mx-auto">
-            <div class="relative max-w-md mx-auto">
-                <input type="text" x-model="searchQuery" placeholder="Search products..." 
-                       class="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                <i class="fas fa-search absolute left-4 top-3 text-gray-400 text-sm"></i>
+    <div class="bg-white border-b border-gray-200 sticky top-[68px] z-40">
+        <div class="pt-4 px-4">
+            <div class="container mx-auto">
+                <div class="relative max-w-md mx-auto">
+                    <input type="text" x-model="searchQuery" placeholder="Search products..." 
+                           class="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <i class="fas fa-search absolute left-4 top-3 text-gray-400 text-sm"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="container mx-auto mt-2">
+            <div class="flex overflow-x-auto no-scrollbar px-4 py-3 space-x-2 whitespace-nowrap">
+                <template x-for="cat in categories" :key="cat">
+                    <button @click="currentCategory = cat" 
+                            :class="currentCategory === cat ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                            class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all flex items-center">
+                        <span x-text="cat"></span>
+                        <span class="ml-2 opacity-50 text-[9px]" x-text="`(${getCategoryCount(cat)})`"></span>
+                    </button>
+                </template>
             </div>
         </div>
     </div>
@@ -40,9 +59,10 @@
                 <div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all flex flex-col"
                      :class="product.soldOut ? 'opacity-70' : ''">
                     
-                    <div class="relative aspect-square bg-gray-100 flex items-center justify-center p-3"
+                    <div class="relative aspect-square bg-white flex items-center justify-center p-4 overflow-hidden"
                          :class="product.soldOut ? 'grayscale' : ''">
-                        <img :src="product.image" :alt="product.name" class="max-h-full max-w-full object-contain transform group-hover:scale-105 transition-transform duration-500">
+                        <img :src="product.image" :alt="product.name" 
+                             class="max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-500 hover:scale-105">
                         
                         <span x-show="!product.soldOut" class="absolute top-2 left-2 text-[8px] font-black bg-black/80 text-white px-1.5 py-0.5 rounded uppercase" x-text="product.type"></span>
                         <span x-show="product.soldOut" class="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-black text-xs">SOLD OUT</span>
@@ -72,6 +92,11 @@
                     </div>
                 </div>
             </template>
+        </div>
+
+        <div x-show="filteredProducts.length === 0" class="text-center py-20 text-gray-400">
+            <i class="fas fa-search mb-4 text-3xl"></i>
+            <p class="text-sm font-bold uppercase tracking-widest">No products found</p>
         </div>
     </main>
 
@@ -103,7 +128,7 @@
                                     <span class="text-[10px] font-bold w-4 text-center" x-text="item.quantity"></span>
                                     <button @click="updateQty(index, 1)" class="px-3 text-gray-600 text-xs font-bold">+</button>
                                 </div>
-                                <span class="font-bold text-xs text-slate-900">₱<span x-text="(item.price * item.quantity).toLocaleString()"></span></span>
+                                <span class="font-bold text-xs">₱<span x-text="(item.price * item.quantity).toLocaleString()"></span></span>
                             </div>
                         </div>
                     </div>
@@ -118,7 +143,6 @@
                     <span>Total:</span>
                     <span>₱<span x-text="cartTotal"></span></span>
                 </div>
-                
                 <div class="grid grid-cols-4 gap-2">
                     <button @click="clearCart()" class="col-span-1 bg-gray-100 text-gray-400 hover:text-red-500 rounded-xl transition-colors">
                         <i class="fas fa-trash-alt"></i>
@@ -136,12 +160,24 @@
             return {
                 cartOpen: false,
                 searchQuery: '',
+                currentCategory: 'All Products',
+                categories: [
+                    'All Products', 
+                    'Pokemon TCG', 
+                    'One Piece TCG', 
+                    'Gundam TCG', 
+                    'Lorcana TCG', 
+                    'Weiss Schwarz TCG', 
+                    'Dragonball TCG',
+                    'Product Accessory'
+                ],
                 cart: [],
                 
                 products: [
                     {
                         id: 1,
                         name: "Phantasmal Flames Booster Box",
+                        category: "Pokemon TCG",
                         type: "Booster Box",
                         set: "Phantasmal Flames",
                         price: 15000,
@@ -152,33 +188,42 @@
                     },
                     {
                         id: 2,
-                        name: "Prismatic Evolutions Bundle",
-                        type: "Booster Bundle",
-                        set: "Prismatic Evolutions",
-                        price: 4000,
-                        image: "https://tcgplayer-cdn.tcgplayer.com/product/600518_in_1000x1000.jpg",
+                        name: "One Piece OP-05 Awakening of the New Era",
+                        category: "One Piece TCG",
+                        type: "Booster Box",
+                        set: "OP-05",
+                        price: 6500,
+                        image: "https://tcgplayer-cdn.tcgplayer.com/product/511241_in_1000x1000.jpg",
                         selectedQty: 1,
                         justAdded: false,
                         soldOut: false 
                     },
                     {
-                        id: 3,
-                        name: "Phantasmal Flames ETB",
-                        type: "ETB",
-                        set: "Phantasmal Flames",
-                        price: 5000,
-                        image: "https://tcgplayer-cdn.tcgplayer.com/product/654136_in_1000x1000.jpg",
+                        id: 4,
+                        name: "Magnetic Card Loader (35pt)",
+                        category: "Product Accessory",
+                        type: "Accessory",
+                        set: "Supplies",
+                        price: 50,
+                        image: "https://tcgplayer-cdn.tcgplayer.com/product/233045_in_1000x1000.jpg",
                         selectedQty: 1,
                         justAdded: false,
-                        soldOut: false
+                        soldOut: false 
                     }
                 ],
 
+                getCategoryCount(cat) {
+                    if (cat === 'All Products') return this.products.length;
+                    return this.products.filter(p => p.category === cat).length;
+                },
+
                 get filteredProducts() {
-                    return this.products.filter(p => 
-                        p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                        p.set.toLowerCase().includes(this.searchQuery.toLowerCase())
-                    );
+                    return this.products.filter(p => {
+                        const matchesSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+                                            p.set.toLowerCase().includes(this.searchQuery.toLowerCase());
+                        const matchesCategory = this.currentCategory === 'All Products' || p.category === this.currentCategory;
+                        return matchesSearch && matchesCategory;
+                    });
                 },
 
                 addToCart(product) {
@@ -227,10 +272,7 @@
 
                     try {
                         await navigator.clipboard.writeText(orderSummary);
-                        alert("Order details copied! Opening Messenger... Just paste your order in the chat.");
-                        
-                        // DIRECT MESSENGER LINK (m.me)
-                        // REPLACE "CrateDropCollective" with your actual Page Username or Page ID
+                        alert("Order details copied! Opening Messenger...");
                         window.open("https://m.me/cratedropcollective", "_blank");
                     } catch (err) {
                         window.open("https://m.me/cratedropcollective", "_blank");
