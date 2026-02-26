@@ -83,12 +83,20 @@
                 <button @click="cartOpen = false" class="text-3xl">&times;</button>
             </div>
 
+            <div class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4" x-show="cart.length > 0">
+                <p class="text-xs text-blue-800 leading-relaxed font-medium">
+                    <i class="fas fa-info-circle mr-1"></i> 
+                    <strong>How to order:</strong> Click the button below to copy your order and open Facebook. Then just <strong>Paste</strong> the message! You can also screenshot this page to show your items.
+                </p>
+            </div>
+
             <div class="flex-1 space-y-6">
                 <template x-for="(item, index) in cart" :key="item.id">
                     <div class="flex items-start border-b border-gray-100 pb-4">
                         <img :src="item.image" class="w-12 h-12 object-contain mr-4 bg-gray-50 p-1 rounded-lg">
                         <div class="flex-1">
                             <p class="font-bold text-xs leading-tight mb-1" x-text="item.name"></p>
+                            <p class="text-[10px] text-gray-500 mb-2">₱<span x-text="item.price.toLocaleString()"></span> each</p>
                             <div class="flex justify-between items-center">
                                 <div class="flex items-center bg-gray-100 rounded-lg h-7">
                                     <button @click="updateQty(index, -1)" class="px-3 text-gray-600 text-xs font-bold">-</button>
@@ -124,10 +132,6 @@
                 searchQuery: '',
                 cart: [],
                 
-                // ==========================================
-                // 📝 PRODUCT TEMPLATE:
-                // { id: 4, name: "Title", type: "Box", set: "Set", price: 1000, image: "URL", selectedQty: 1, justAdded: false, soldOut: false },
-                // ==========================================
                 products: [
                     {
                         id: 1,
@@ -138,7 +142,7 @@
                         image: "https://tcgplayer-cdn.tcgplayer.com/product/654137_in_1000x1000.jpg",
                         selectedQty: 1,
                         justAdded: false,
-                        soldOut: false // CHANGE TO true TO MARK AS SOLD OUT
+                        soldOut: false 
                     },
                     {
                         id: 2,
@@ -149,7 +153,7 @@
                         image: "https://tcgplayer-cdn.tcgplayer.com/product/600518_in_1000x1000.jpg",
                         selectedQty: 1,
                         justAdded: false,
-                        soldOut: false // Example Sold Out
+                        soldOut: false 
                     },
                     {
                         id: 3,
@@ -205,13 +209,14 @@
                 async checkout() {
                     let orderSummary = "🛒 ORDER FROM CRATE DROP COLLECTIVE\n\n";
                     this.cart.forEach(item => {
-                        orderSummary += `• ${item.quantity}x ${item.name} - ₱${(item.price * item.quantity).toLocaleString()}\n`;
+                        // Added unit price here per your request
+                        orderSummary += `• ${item.quantity}x ${item.name} (₱${item.price.toLocaleString()} each) - ₱${(item.price * item.quantity).toLocaleString()}\n`;
                     });
                     orderSummary += `\nTOTAL: ₱${this.cartTotal}`;
 
                     try {
                         await navigator.clipboard.writeText(orderSummary);
-                        alert("Order details copied! Opening Facebook. Send us a message just paste your order");
+                        alert("Order details copied! Opening Facebook. Send us a message and just paste your order.");
                         window.open("https://www.facebook.com/share/1AaiN79gTS/?mibextid=wwXIfr", "_blank");
                     } catch (err) {
                         window.open("https://www.facebook.com/share/1AaiN79gTS/?mibextid=wwXIfr", "_blank");
