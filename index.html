@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crate Drop Collective | TCG Store</title>
+    <title>Crate Drop Collective | Sealed Products</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -19,31 +19,39 @@
             </div>
             <button @click="cartOpen = true" class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-full flex items-center transition-all">
                 <i class="fas fa-shopping-cart mr-2 text-sm"></i>
-                <span class="font-bold text-sm">Cart (<span x-text="cart.length"></span>) — ₱<span x-text="total"></span></span>
+                <span class="font-bold text-sm">Cart (<span x-text="cartItemCount"></span>) — ₱<span x-text="cartTotal"></span></span>
             </button>
         </div>
     </nav>
 
     <main class="container mx-auto py-10 px-4">
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <template x-for="product in products" :key="product.id">
-                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all group">
-                    <div class="relative aspect-square bg-gray-100 flex items-center justify-center p-4">
-                        <img :src="product.image" :alt="product.name" class="max-h-full object-contain transform group-hover:scale-110 transition-transform duration-500">
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all group flex flex-col">
+                    <div class="relative h-64 bg-gray-100 flex items-center justify-center p-6">
+                        <img :src="product.image" :alt="product.name" class="max-h-full max-w-full object-contain transform group-hover:scale-105 transition-transform duration-500 drop-shadow-lg">
+                        <span class="absolute top-4 left-4 text-[10px] font-black bg-black text-white px-2 py-1 rounded uppercase tracking-wider" x-text="product.type"></span>
                     </div>
-                    <div class="p-4 md:p-6">
-                        <p class="text-[10px] font-black text-blue-600 uppercase mb-1" x-text="product.set"></p>
-                        <h2 class="text-sm md:text-base font-bold leading-tight mb-2 h-10 overflow-hidden" x-text="product.name"></h2>
-                        <div class="flex justify-between items-end">
-                            <div>
-                                <p class="text-[10px] text-gray-500 font-bold" x-text="product.condition"></p>
-                                <p class="text-lg font-black">₱<span x-text="product.price.toLocaleString()"></span></p>
+                    
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[10px] font-black text-blue-600 uppercase mb-1" x-text="product.set"></p>
+                            <h2 class="text-lg font-bold leading-tight mb-2" x-text="product.name"></h2>
+                            <p class="text-2xl font-black mb-4">₱<span x-text="product.price.toLocaleString()"></span></p>
+                        </div>
+
+                        <div class="flex items-center space-x-2 mt-auto">
+                            <div class="flex items-center border border-gray-300 rounded-xl px-2 h-10 bg-gray-50">
+                                <button @click="if(product.selectedQty > 1) product.selectedQty--" class="text-gray-500 hover:text-black px-2">-</button>
+                                <span class="text-sm font-bold w-4 text-center" x-text="product.selectedQty"></span>
+                                <button @click="product.selectedQty++" class="text-gray-500 hover:text-black px-2">+</button>
                             </div>
+
                             <button @click="addToCart(product)" 
                                     :class="product.justAdded ? 'bg-green-500' : 'bg-slate-900 hover:bg-blue-600'"
-                                    class="text-white px-3 py-2 rounded-xl transition-colors text-xs font-bold">
-                                <span x-show="!product.justAdded"><i class="fas fa-plus"></i> Add</span>
-                                <span x-show="product.justAdded"><i class="fas fa-check"></i> Added!</span>
+                                    class="flex-1 h-10 rounded-xl text-white transition-colors text-sm font-bold flex items-center justify-center">
+                                <span x-show="!product.justAdded">Add to Cart</span>
+                                <span x-show="product.justAdded"><i class="fas fa-check mr-1"></i> Added</span>
                             </button>
                         </div>
                     </div>
@@ -54,44 +62,47 @@
 
     <div x-show="cartOpen" class="fixed inset-0 z-[60]" style="display: none;">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="cartOpen = false"></div>
-        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white p-8 overflow-y-auto">
-            <div class="flex justify-between items-center mb-8">
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white p-6 overflow-y-auto flex flex-col">
+            <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-black text-slate-900">YOUR BASKET</h2>
-                <button @click="cartOpen = false" class="text-3xl">&times;</button>
+                <button @click="cartOpen = false" class="text-3xl hover:text-red-500">&times;</button>
             </div>
 
-            <div class="space-y-6">
-                <template x-for="(item, index) in cart" :key="index">
-                    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
-                        <div class="flex items-center">
-                            <img :src="item.image" class="w-12 h-12 object-contain mr-4 bg-gray-50 p-1 rounded">
-                            <div>
-                                <p class="font-bold text-sm leading-tight text-slate-800" x-text="item.name"></p>
-                                <p class="text-[10px] font-bold text-blue-600 uppercase" x-text="item.condition"></p>
+            <div class="flex-1 space-y-6 overflow-y-auto">
+                <template x-for="(item, index) in cart" :key="item.id">
+                    <div class="flex items-start border-b border-gray-100 pb-4">
+                        <img :src="item.image" class="w-16 h-16 object-contain mr-4 bg-gray-50 p-1 rounded-lg border">
+                        <div class="flex-1">
+                            <p class="font-bold text-sm leading-tight text-slate-800 mb-1" x-text="item.name"></p>
+                            <p class="text-xs text-blue-600 font-bold mb-2">₱<span x-text="item.price.toLocaleString()"></span> each</p>
+                            
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center bg-gray-100 rounded-lg h-8">
+                                    <button @click="updateQty(index, -1)" class="px-3 text-gray-600 hover:text-red-500 text-sm font-bold">-</button>
+                                    <span class="text-xs font-bold w-4 text-center" x-text="item.quantity"></span>
+                                    <button @click="updateQty(index, 1)" class="px-3 text-gray-600 hover:text-green-600 text-sm font-bold">+</button>
+                                </div>
+                                <span class="font-bold text-sm">₱<span x-text="(item.price * item.quantity).toLocaleString()"></span></span>
                             </div>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="font-bold text-sm mr-4 text-slate-900">₱<span x-text="item.price.toLocaleString()"></span></span>
-                            <button @click="removeFromCart(index)" class="text-gray-300 hover:text-red-500 transition"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
                 </template>
+                
+                <div x-show="cart.length === 0" class="text-center py-20 text-gray-400">
+                    <i class="fas fa-box-open text-4xl mb-4"></i>
+                    <p>Your crate is empty.</p>
+                </div>
             </div>
 
-            <div class="mt-10" x-show="cart.length > 0">
-                <div class="flex justify-between text-2xl font-black mb-8">
+            <div class="mt-6 pt-6 border-t" x-show="cart.length > 0">
+                <div class="flex justify-between text-xl font-black mb-6">
                     <span>Total:</span>
-                    <span>₱<span x-text="total"></span></span>
+                    <span>₱<span x-text="cartTotal"></span></span>
                 </div>
-                <button @click="checkout()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black hover:bg-blue-700 transition-transform active:scale-95 shadow-lg shadow-blue-200">
+                <button @click="checkout()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black hover:bg-blue-700 transition-transform active:scale-95 shadow-lg shadow-blue-200">
                     ORDER VIA FACEBOOK
                 </button>
                 <p class="text-center text-[10px] text-gray-400 mt-4 font-bold uppercase tracking-widest">Order list will be copied to clipboard</p>
-            </div>
-            
-            <div x-show="cart.length === 0" class="text-center py-20 text-gray-400">
-                <i class="fas fa-shopping-bag text-4xl mb-4"></i>
-                <p>Basket is empty.</p>
             </div>
         </div>
     </div>
@@ -103,70 +114,96 @@
                 cart: [],
                 
                 // ==========================================
-                // 📝 TEMPLATE: COPY & PASTE ONE BLOCK BELOW TO ADD A PRODUCT
-                /* {
-                    id: 4,
-                    name: "Card Name Here",
-                    set: "Set Name",
-                    price: 1000,
-                    condition: "NM",
-                    image: "https://link-to-image.png",
-                    justAdded: false
-                },
-                */
+                // 📦 SEALED PRODUCT INVENTORY
                 // ==========================================
                 products: [
                     {
                         id: 1,
-                        name: "Charizard G Level X",
-                        set: "Supreme Victors",
-                        price: 6500,
-                        condition: "Near Mint",
-                        image: "https://images.pokemontcg.io/pl3/143_hires.png",
+                        name: "Phantasmal Flames Booster Box",
+                        type: "Booster Box",
+                        set: "Phantasmal Flames",
+                        price: 15000,
+                        image: "https://m.media-amazon.com/images/I/81fH1+Gv+AL._AC_SL1500_.jpg", // Placeholder Image
+                        selectedQty: 1,
                         justAdded: false
                     },
                     {
                         id: 2,
-                        name: "Gengar VMAX (Alt Art)",
-                        set: "Fusion Strike",
-                        price: 14000,
-                        condition: "Mint",
-                        image: "https://images.pokemontcg.io/swsh8/271_hires.png",
+                        name: "Prismatic Evolutions Booster Bundle",
+                        type: "Bundle",
+                        set: "Prismatic Evolutions",
+                        price: 4000,
+                        image: "https://product-images.tcgplayer.com/fit-in/437x437/586395.jpg", // Placeholder Image
+                        selectedQty: 1,
                         justAdded: false
                     },
                     {
                         id: 3,
-                        name: "Umbreon Star",
-                        set: "Celebrations",
-                        price: 2500,
-                        condition: "Near Mint",
-                        image: "https://images.pokemontcg.io/cel25/17_hires.png",
+                        name: "Phantasmal Flames Elite Trainer Box",
+                        type: "ETB",
+                        set: "Phantasmal Flames",
+                        price: 5000,
+                        image: "https://m.media-amazon.com/images/I/81xG-E-y5XL._AC_SL1500_.jpg", // Placeholder Image
+                        selectedQty: 1,
                         justAdded: false
                     }
                 ],
                 // ==========================================
 
                 addToCart(product) {
-                    this.cart.push(product);
+                    // Check if item already exists in cart
+                    let existingItem = this.cart.find(item => item.id === product.id);
+                    
+                    if (existingItem) {
+                        existingItem.quantity += product.selectedQty;
+                    } else {
+                        // Create a clean copy of the product for the cart
+                        this.cart.push({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            image: product.image,
+                            condition: product.set, // Using Set as subtitle
+                            quantity: product.selectedQty
+                        });
+                    }
+                    
+                    // Visual feedback
                     product.justAdded = true;
-                    setTimeout(() => { product.justAdded = false; }, 2000);
+                    setTimeout(() => { product.justAdded = false; }, 1000);
+                    
+                    // Reset product selector to 1
+                    product.selectedQty = 1;
                 },
-                removeFromCart(index) {
-                    this.cart.splice(index, 1);
+
+                updateQty(index, change) {
+                    if (this.cart[index].quantity + change <= 0) {
+                        if(confirm("Remove this item?")) {
+                            this.cart.splice(index, 1);
+                        }
+                    } else {
+                        this.cart[index].quantity += change;
+                    }
                 },
-                get total() {
-                    return this.cart.reduce((sum, item) => sum + item.price, 0).toLocaleString();
+
+                get cartItemCount() {
+                    return this.cart.reduce((sum, item) => sum + item.quantity, 0);
                 },
+
+                get cartTotal() {
+                    return this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString();
+                },
+
                 async checkout() {
                     let orderSummary = "🛒 ORDER FROM CRATE DROP COLLECTIVE\n\n";
                     this.cart.forEach(item => {
-                        orderSummary += `• ${item.name} (${item.condition}) - ₱${item.price.toLocaleString()}\n`;
+                        orderSummary += `• ${item.quantity}x ${item.name} - ₱${(item.price * item.quantity).toLocaleString()}\n`;
                     });
-                    orderSummary += `\nTOTAL: ₱${this.total}`;
+                    orderSummary += `\nTOTAL: ₱${this.cartTotal}`;
 
                     try {
                         await navigator.clipboard.writeText(orderSummary);
-                        alert("Order list copied! Now opening Facebook. Just PASTE the message in the chat.");
+                        alert("Order details copied! Opening Facebook...");
                         window.open("https://www.facebook.com/share/1AaiN79gTS/?mibextid=wwXIfr", "_blank");
                     } catch (err) {
                         window.open("https://www.facebook.com/share/1AaiN79gTS/?mibextid=wwXIfr", "_blank");
