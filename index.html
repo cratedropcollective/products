@@ -73,14 +73,32 @@
                          :class="product.soldOut ? 'grayscale' : ''">
                         <img :src="product.image" :alt="product.name" 
                              class="max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-500 hover:scale-105">
+                        
                         <span x-show="!product.soldOut" class="absolute top-2 left-2 text-[8px] font-black bg-black/80 text-white px-1.5 py-0.5 rounded uppercase" x-text="product.type"></span>
+                        
+                        <template x-if="product.originalPrice && !product.soldOut">
+                            <span class="absolute top-2 right-2 text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded uppercase shadow-lg animate-pulse">
+                                SALE
+                            </span>
+                        </template>
+
                         <span x-show="product.soldOut" class="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-black text-xs">SOLD OUT</span>
                     </div>
                     
                     <div class="p-3 md:p-5 flex-1 flex flex-col">
                         <p class="text-[8px] md:text-[10px] font-black text-blue-600 uppercase mb-1" x-text="product.set"></p>
                         <h2 class="text-xs md:text-base font-bold leading-tight mb-2 h-8 md:h-12 overflow-hidden" x-text="product.name"></h2>
-                        <p class="text-sm md:text-xl font-black mb-3">₱<span x-text="product.price.toLocaleString()"></span></p>
+                        
+                        <div class="flex items-baseline space-x-2 mb-3">
+                            <p class="text-sm md:text-xl font-black text-slate-900">
+                                ₱<span x-text="product.price.toLocaleString()"></span>
+                            </p>
+                            <template x-if="product.originalPrice">
+                                <p class="text-[10px] md:text-xs text-gray-400 line-through font-bold">
+                                    ₱<span x-text="product.originalPrice.toLocaleString()"></span>
+                                </p>
+                            </template>
+                        </div>
 
                         <div x-show="!product.soldOut" class="flex items-center space-x-1 mb-2">
                             <div class="flex items-center border border-gray-300 rounded-lg px-1 h-7 bg-gray-50 scale-90 md:scale-100 origin-left">
@@ -153,6 +171,11 @@
             </div>
 
             <div class="mt-6 pt-6 border-t" x-show="cart.length > 0">
+                <div x-show="totalSavings > 0" class="flex justify-between text-[11px] font-bold text-green-600 mb-1 uppercase tracking-tighter">
+                    <span>🔥 Total Savings:</span>
+                    <span>-₱<span x-text="totalSavings.toLocaleString()"></span></span>
+                </div>
+                
                 <div class="flex justify-between text-lg font-black mb-4">
                     <span>Total:</span>
                     <span>₱<span x-text="cartTotal"></span></span>
@@ -191,7 +214,8 @@
                 sortOrder: 'low',
                 currentCategory: 'All Products',
                 showCopiedToast: false,
-                categories: ['All Products', 'Pokemon TCG', 'One Piece TCG', 'Gundam TCG', 'Lorcana TCG', 'Weiss Schwarz TCG', 'Dragonball TCG', 'Product Accessory'],
+                // Added "On Sale" to categories
+                categories: ['All Products', 'On Sale', 'Pokemon TCG', 'One Piece TCG', 'Gundam TCG', 'Lorcana TCG', 'Weiss Schwarz TCG', 'Dragonball TCG', 'Product Accessory'],
                 cart: [],
                 
                 products: [
@@ -201,7 +225,8 @@
                         category: "Pokemon TCG",
                         type: "Booster Box",
                         set: "Phantasmal Flames",
-                        price: 14500,
+                        price: 12500, // Reduced price
+                        originalPrice: 14500, // Added original price
                         image: "https://tcgplayer-cdn.tcgplayer.com/product/654137_in_1000x1000.jpg",
                         selectedQty: 1,
                         justAdded: false,
@@ -285,7 +310,8 @@
                         category: "Pokemon TCG",
                         type: "Booster Box",
                         set: "Mega Evolution",
-                        price: 14500,
+                        price: 11500, // Reduced price
+                        originalPrice: 14500, // Added original price
                         image: "https://tcgplayer-cdn.tcgplayer.com/product/644298_in_1000x1000.jpg",
                         selectedQty: 1,
                         justAdded: false,
@@ -295,14 +321,24 @@
 
                 getCategoryCount(cat) {
                     if (cat === 'All Products') return this.products.length;
+                    if (cat === 'On Sale') return this.products.filter(p => p.originalPrice).length;
                     return this.products.filter(p => p.category === cat).length;
                 },
 
                 get filteredProducts() {
                     let items = this.products.filter(p => {
                         const matchesSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
-                                            p.set.toLowerCase().includes(this.searchQuery.toLowerCase());
-                        const matchesCategory = this.currentCategory === 'All Products' || p.category === this.currentCategory;
+                                             p.set.toLowerCase().includes(this.searchQuery.toLowerCase());
+                        
+                        let matchesCategory = false;
+                        if (this.currentCategory === 'All Products') {
+                            matchesCategory = true;
+                        } else if (this.currentCategory === 'On Sale') {
+                            matchesCategory = !!p.originalPrice;
+                        } else {
+                            matchesCategory = p.category === this.currentCategory;
+                        }
+
                         return matchesSearch && matchesCategory;
                     });
 
@@ -325,6 +361,8 @@
                             id: product.id,
                             name: product.name,
                             price: product.price,
+                            // Store original price in cart item to calculate savings later
+                            originalPrice: product.originalPrice || product.price,
                             image: product.image,
                             quantity: product.selectedQty
                         });
@@ -348,6 +386,16 @@
                     }
                 },
 
+                // Getter to calculate total savings in cart
+                get totalSavings() {
+                    return this.cart.reduce((sum, item) => {
+                        if (item.originalPrice > item.price) {
+                            return sum + ((item.originalPrice - item.price) * item.quantity);
+                        }
+                        return sum;
+                    }, 0);
+                },
+
                 get cartTotal() {
                     return this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString();
                 },
@@ -357,6 +405,11 @@
                     this.cart.forEach(item => {
                         orderSummary += `• ${item.quantity}x ${item.name} (₱${item.price.toLocaleString()} each) - ₱${(item.price * item.quantity).toLocaleString()}\n`;
                     });
+                    
+                    if (this.totalSavings > 0) {
+                        orderSummary += `\n✨ YOU SAVED: ₱${this.totalSavings.toLocaleString()}`;
+                    }
+                    
                     orderSummary += `\nTOTAL: ₱${this.cartTotal}`;
 
                     try {
@@ -364,7 +417,6 @@
                         this.showCopiedToast = true;
                         setTimeout(() => { this.showCopiedToast = false; }, 3000);
                         
-                        // Wait a bit so they see the notification before the window opens
                         setTimeout(() => {
                             window.open("https://m.me/cratedropcollective", "_blank");
                         }, 800);
