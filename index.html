@@ -40,9 +40,9 @@
                 <div class="relative min-w-[140px]">
                     <select x-model="sortOrder" 
                             class="w-full h-full pl-4 pr-10 py-2 bg-gray-100 border-none rounded-xl text-xs font-bold uppercase appearance-none focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer">
-                        <option value="newest">Latest</option>
-                        <option value="low">Price: Low to High</option>
+                        <option value="low">Low to High</option>
                         <option value="high">Price: High to Low</option>
+                        <option value="newest">Price: Latest</option>
                     </select>
                     <i class="fas fa-chevron-down absolute right-4 top-3 text-gray-400 text-[10px] pointer-events-none"></i>
                 </div>
@@ -275,6 +275,18 @@
                         set: "Steel Requiem [GD-03]",
                         price: 34800,
                         image: "https://www.hobbydigi.com/media/catalog/product/cache/image/700x700/e9c3970ab036de70892d86c6d221abfe/_/j/_japanese_ver_bandai_gundam_card_game_card_game_booster_pack_-_gd03-steel_requiem_original_box_of_24_stock_guaranteed__251216023540_1.jpg?src=seo",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: false 
+                    },
+                    {
+                        id: 8,
+                        name: "Mega Evolution Enhanced Booster Box",
+                        category: "Pokemon TCG",
+                        type: "Booster Box",
+                        set: "Mega Evolution",
+                        price: 14500,
+                        image: "https://tcgplayer-cdn.tcgplayer.com/product/644300_in_1000x1000.jpg",
                         selectedQty: 1,
                         justAdded: false,
                         soldOut: false 
