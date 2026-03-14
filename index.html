@@ -214,135 +214,20 @@
                 sortOrder: 'low',
                 currentCategory: 'All Products',
                 showCopiedToast: false,
-                // Added "On Sale" to categories
                 categories: ['All Products', 'On Sale', 'Pokemon TCG', 'One Piece TCG', 'Gundam TCG', 'Lorcana TCG', 'Magic The Gathering', 'Weiss Schwarz TCG', 'Dragonball TCG', 'Product Accessory'],
                 cart: [],
                 
                 products: [
-                     {
-                        id: 1,
-                        name: "Phantasmal Flames Booster Box",
-                        category: "Pokemon TCG",
-                        type: "Booster Box",
-                        set: "Phantasmal Flames",
-                        price: 18000,
-                        originalPrice: 20000,
-                        image: "https://tcgplayer-cdn.tcgplayer.com/product/654137_in_1000x1000.jpg",
-                        selectedQty: 1,
-                        justAdded: false,
-                        soldOut: false 
-                    },
-                    {
-                        id: 2,
-                        name: "Phantasmal Flames Elite Trainer Box",
-                        category: "Pokemon TCG",
-                        type: "ETB",
-                        set: "Phantasmal Flames",
-                        price: 6000,
-                        image: "https://tcgplayer-cdn.tcgplayer.com/product/654136_in_1000x1000.jpg",
-                        selectedQty: 1,
-                        justAdded: false,
-                        soldOut: false 
-                    },
-                    {
-                        id: 3,
-                        name: "Prismatic Evolutions Booster Bundle",
-                        category: "Pokemon TCG",
-                        type: "Booster Bundle",
-                        set: "Prismatic Evolutions",
-                        price: 4200,
-                        image: "https://tcgplayer-cdn.tcgplayer.com/product/600518_in_1000x1000.jpg",
-                        selectedQty: 1,
-                        justAdded: false,
-                        soldOut: true 
-                    },
-                    {
-                        id: 4,
-                        name: "PRE Booster Bundle Display (free Acrylic Case)",
-                        category: "Pokemon TCG",
-                        type: "Display Case",
-                        set: "Prismatic Evolutions",
-                        price: 60000,
-                        image: "https://tcgplayer-cdn.tcgplayer.com/product/610317_in_1000x1000.jpg",
-                        selectedQty: 1,
-                        justAdded: false,
-                        soldOut: true 
-                    },
-                    {
-                        id: 5,
-                        name: "GCG Newtype Rising [GD-01] Case (JP)",
-                        category: "Gundam TCG",
-                        type: "Booster Box Case",
-                        set: "Newtype Rising [GD-01]",
-                        price: 34800,
-                        image: "https://www.gundam-gcg.com/gcg/bccard/asia-en/news/2025/05/02/8255768kkzrLLWCW/thumbnail_box_jp.webp",
-                        selectedQty: 1,
-                        justAdded: false,
-                        soldOut: false 
-                    },
-                    {
-                        id: 6,
-                        name: "GCG Dual Impact [GD-02] Case (JP)",
-                        category: "Gundam TCG",
-                        type: "Booster Box Case",
-                        set: "Dual Impact [GD-02]",
-                        price: 34800,
-                        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr8DrGGHzKuKHycM2YMFp8JnBPh3Gb4zmAAueM1bpCVA&s=10",
-                        selectedQty: 1,
-                        justAdded: false,
-                        soldOut: false 
-                    },
-                    {
-                        id: 7,
-                        name: "GCG Steel Requiem [GD-03] Case (JP)",
-                        category: "Gundam TCG",
-                        type: "Booster Box Case",
-                        set: "Steel Requiem [GD-03]",
-                        price: 34800,
-                        image: "https://www.hobbydigi.com/media/catalog/product/cache/image/700x700/e9c3970ab036de70892d86c6d221abfe/_/j/_japanese_ver_bandai_gundam_card_game_card_game_booster_pack_-_gd03-steel_requiem_original_box_of_24_stock_guaranteed__251216023540_1.jpg?src=seo",
-                        selectedQty: 1,
-                        justAdded: false,
-                        soldOut: true 
-                    },
-                    {
-                        id: 8,
-                        name: "Mega Evolution Enhanced Booster Box",
-                        category: "Pokemon TCG",
-                        type: "Booster Box",
-                        set: "Mega Evolution",
-                        price: 15000, // Reduced price
-                        originalPrice: 16000, // Added original price
-                        image: "https://tcgplayer-cdn.tcgplayer.com/product/644298_in_1000x1000.jpg",
-                        selectedQty: 1,
-                        justAdded: false,
-                        soldOut: true 
-                    },
-                    {
-                        id: 9,
-                        name: "Lorwyn Eclipsed Play Booster Box",
-                        category: "Magic The Gathering",
-                        type: "Booster Box",
-                        set:"Lorwyn Eclipsed",
-                        price: 8500, // Reduced price
-                        originalPrice: 10500, // Added original price
-                        image: "https://m.media-amazon.com/images/I/71fPQsW9USL.jpg",
-                        selectedQty: 1,
-                        justAdded: false,
-                        soldOut: false 
-                    },
-                    {
-                        id: 10,
-                        name: "Phantasmal Flames Half Booster Box",
-                        category: "Pokemon TCG",
-                        type: "Half Booster Box",
-                        set: "Phantasmal Flames",
-                        price: 7500, // Reduced price
-                        originalPrice: 8700, // Added original price
-                        image: "https://storage.googleapis.com/images.pricecharting.com/xytsrke2nwumzkrv/1600.jpg",
-                        selectedQty: 1,
-                        justAdded: false,
-                        soldOut: false 
-                    },
+                    { id: 1, name: "Phantasmal Flames Booster Box", category: "Pokemon TCG", type: "Booster Box", set: "Phantasmal Flames", price: 18000, originalPrice: 20000, image: "https://tcgplayer-cdn.tcgplayer.com/product/654137_in_1000x1000.jpg", selectedQty: 1, justAdded: false, soldOut: false },
+                    { id: 2, name: "Phantasmal Flames Elite Trainer Box", category: "Pokemon TCG", type: "ETB", set: "Phantasmal Flames", price: 6000, image: "https://tcgplayer-cdn.tcgplayer.com/product/654136_in_1000x1000.jpg", selectedQty: 1, justAdded: false, soldOut: false },
+                    { id: 3, name: "Prismatic Evolutions Booster Bundle", category: "Pokemon TCG", type: "Booster Bundle", set: "Prismatic Evolutions", price: 4200, image: "https://tcgplayer-cdn.tcgplayer.com/product/600518_in_1000x1000.jpg", selectedQty: 1, justAdded: false, soldOut: true },
+                    { id: 4, name: "PRE Booster Bundle Display (free Acrylic Case)", category: "Pokemon TCG", type: "Display Case", set: "Prismatic Evolutions", price: 60000, image: "https://tcgplayer-cdn.tcgplayer.com/product/610317_in_1000x1000.jpg", selectedQty: 1, justAdded: false, soldOut: true },
+                    { id: 5, name: "GCG Newtype Rising [GD-01] Case (JP)", category: "Gundam TCG", type: "Booster Box Case", set: "Newtype Rising [GD-01]", price: 34800, image: "https://www.gundam-gcg.com/gcg/bccard/asia-en/news/2025/05/02/8255768kkzrLLWCW/thumbnail_box_jp.webp", selectedQty: 1, justAdded: false, soldOut: false },
+                    { id: 6, name: "GCG Dual Impact [GD-02] Case (JP)", category: "Gundam TCG", type: "Booster Box Case", set: "Dual Impact [GD-02]", price: 34800, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr8DrGGHzKuKHycM2YMFp8JnBPh3Gb4zmAAueM1bpCVA&s=10", selectedQty: 1, justAdded: false, soldOut: false },
+                    { id: 7, name: "GCG Steel Requiem [GD-03] Case (JP)", category: "Gundam TCG", type: "Booster Box Case", set: "Steel Requiem [GD-03]", price: 34800, image: "https://www.hobbydigi.com/media/catalog/product/cache/image/700x700/e9c3970ab036de70892d86c6d221abfe/_/j/_japanese_ver_bandai_gundam_card_game_card_game_booster_pack_-_gd03-steel_requiem_original_box_of_24_stock_guaranteed__251216023540_1.jpg?src=seo", selectedQty: 1, justAdded: false, soldOut: true },
+                    { id: 8, name: "Mega Evolution Enhanced Booster Box", category: "Pokemon TCG", type: "Booster Box", set: "Mega Evolution", price: 15000, originalPrice: 16000, image: "https://tcgplayer-cdn.tcgplayer.com/product/644298_in_1000x1000.jpg", selectedQty: 1, justAdded: false, soldOut: true },
+                    { id: 9, name: "Lorwyn Eclipsed Play Booster Box", category: "Magic The Gathering", type: "Booster Box", set:"Lorwyn Eclipsed", price: 8500, originalPrice: 10500, image: "https://m.media-amazon.com/images/I/71fPQsW9USL.jpg", selectedQty: 1, justAdded: false, soldOut: false },
+                    { id: 10, name: "Phantasmal Flames Half Booster Box", category: "Pokemon TCG", type: "Half Booster Box", set: "Phantasmal Flames", price: 7500, originalPrice: 8700, image: "https://storage.googleapis.com/images.pricecharting.com/xytsrke2nwumzkrv/1600.jpg", selectedQty: 1, justAdded: false, soldOut: false },
                 ],
 
                 getCategoryCount(cat) {
@@ -352,6 +237,7 @@
                 },
 
                 get filteredProducts() {
+                    // 1. Basic filter by search and category
                     let items = this.products.filter(p => {
                         const matchesSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
                                              p.set.toLowerCase().includes(this.searchQuery.toLowerCase());
@@ -368,13 +254,20 @@
                         return matchesSearch && matchesCategory;
                     });
 
+                    // 2. Apply your Sort (Price or Latest)
                     if (this.sortOrder === 'low') {
-                        return items.sort((a, b) => a.price - b.price);
+                        items.sort((a, b) => a.price - b.price);
                     } else if (this.sortOrder === 'high') {
-                        return items.sort((a, b) => b.price - a.price);
+                        items.sort((a, b) => b.price - a.price);
                     } else {
-                        return items.sort((a, b) => b.id - a.id);
+                        items.sort((a, b) => b.id - a.id);
                     }
+
+                    // 3. Final priority: Push Sold Out items to the bottom
+                    return items.sort((a, b) => {
+                        if (a.soldOut === b.soldOut) return 0; // Keep their current relative order
+                        return a.soldOut ? 1 : -1; // Move sold out to the end
+                    });
                 },
 
                 addToCart(product) {
@@ -387,7 +280,6 @@
                             id: product.id,
                             name: product.name,
                             price: product.price,
-                            // Store original price in cart item to calculate savings later
                             originalPrice: product.originalPrice || product.price,
                             image: product.image,
                             quantity: product.selectedQty
@@ -412,7 +304,6 @@
                     }
                 },
 
-                // Getter to calculate total savings in cart
                 get totalSavings() {
                     return this.cart.reduce((sum, item) => {
                         if (item.originalPrice > item.price) {
