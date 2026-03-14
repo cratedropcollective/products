@@ -1,4 +1,212 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crate Drop Collective | Sealed Products</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        [x-cloak] { display: none !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-slate-900" x-data="shop()" x-cloak>
+
+    <nav class="bg-black text-white p-4 sticky top-0 z-50 shadow-2xl">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex flex-col">
+                <span class="text-lg md:text-xl font-black tracking-tighter leading-none">CRATE DROP</span>
+                <span class="text-[10px] font-bold text-blue-500 tracking-[0.2em]">COLLECTIVE</span>
+            </div>
+            <button @click="cartOpen = true" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full flex items-center transition-all relative">
+                <i class="fas fa-shopping-cart mr-2 text-xs"></i>
+                <span class="font-bold text-xs text-white">₱<span x-text="cartTotal"></span></span>
+                <span x-show="cart.length > 0" class="absolute -top-1 -right-1 bg-red-500 text-[8px] w-4 h-4 flex items-center justify-center rounded-full border-2 border-black" x-text="cart.reduce((s, i) => s + i.quantity, 0)"></span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="bg-white border-b border-gray-200 sticky top-[68px] z-40">
+        <div class="pt-4 px-4">
+            <div class="container mx-auto flex flex-col md:flex-row gap-3">
+                <div class="relative flex-1">
+                    <input type="text" x-model="searchQuery" placeholder="Search products..." 
+                           class="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl text-base md:text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <i class="fas fa-search absolute left-4 top-3 text-gray-400 text-sm"></i>
+                </div>
+                <div class="relative min-w-[140px]">
+                    <select x-model="sortOrder" 
+                            class="w-full h-full pl-4 pr-10 py-2 bg-gray-100 border-none rounded-xl text-xs font-bold uppercase appearance-none focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer">
+                        <option value="newest"> Latest</option>
+                        <option value="low">Price: Low to High</option>
+                        <option value="high">Price: High to Low</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-3 text-gray-400 text-[10px] pointer-events-none"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="container mx-auto mt-2">
+            <div class="flex overflow-x-auto no-scrollbar px-4 py-3 space-x-2 whitespace-nowrap">
+                <template x-for="cat in categories" :key="cat">
+                    <button @click="currentCategory = cat" 
+                            :class="currentCategory === cat ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                            class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all flex items-center">
+                        <span x-text="cat"></span>
+                        <span class="ml-2 opacity-50 text-[9px]" x-text="`(${getCategoryCount(cat)})`"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <main class="container mx-auto py-6 px-2 md:px-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-8">
+            <template x-for="product in filteredProducts" :key="product.id">
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all flex flex-col"
+                     :class="product.soldOut ? 'opacity-70' : ''">
+                    
+                    <div class="relative aspect-square bg-[#fdfdfd] flex items-center justify-center p-4 overflow-hidden"
+                         :class="product.soldOut ? 'grayscale' : ''">
+                        <img :src="product.image" :alt="product.name" 
+                             class="max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-500 hover:scale-105">
+                        
+                        <span x-show="!product.soldOut" class="absolute top-2 left-2 text-[8px] font-black bg-black/80 text-white px-1.5 py-0.5 rounded uppercase" x-text="product.type"></span>
+                        
+                        <template x-if="product.originalPrice && !product.soldOut">
+                            <span class="absolute top-2 right-2 text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded uppercase shadow-lg animate-pulse">
+                                SALE
+                            </span>
+                        </template>
+
+                        <span x-show="product.soldOut" class="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-black text-xs">SOLD OUT</span>
+                    </div>
+                    
+                    <div class="p-3 md:p-5 flex-1 flex flex-col">
+                        <p class="text-[8px] md:text-[10px] font-black text-blue-600 uppercase mb-1" x-text="product.set"></p>
+                        <h2 class="text-xs md:text-base font-bold leading-tight mb-2 h-8 md:h-12 overflow-hidden" x-text="product.name"></h2>
+                        
+                        <div class="flex items-baseline space-x-2 mb-3">
+                            <p class="text-sm md:text-xl font-black text-slate-900">
+                                ₱<span x-text="product.price.toLocaleString()"></span>
+                            </p>
+                            <template x-if="product.originalPrice">
+                                <p class="text-[10px] md:text-xs text-gray-400 line-through font-bold">
+                                    ₱<span x-text="product.originalPrice.toLocaleString()"></span>
+                                </p>
+                            </template>
+                        </div>
+
+                        <div x-show="!product.soldOut" class="flex items-center space-x-1 mb-2">
+                            <div class="flex items-center border border-gray-300 rounded-lg px-1 h-7 bg-gray-50 scale-90 md:scale-100 origin-left">
+                                <button @click="if(product.selectedQty > 1) product.selectedQty--" class="text-gray-500 px-2 font-bold">-</button>
+                                <span class="text-[10px] md:text-xs font-bold w-4 text-center" x-text="product.selectedQty"></span>
+                                <button @click="product.selectedQty++" class="text-gray-500 px-2 font-bold">+</button>
+                            </div>
+                        </div>
+
+                        <button @click="addToCart(product)" 
+                                :disabled="product.soldOut"
+                                :class="product.soldOut ? 'bg-gray-300' : (product.justAdded ? 'bg-green-500' : 'bg-slate-900')"
+                                class="w-full h-9 rounded-lg text-white transition-colors text-[10px] md:text-xs font-bold flex items-center justify-center uppercase">
+                            <span x-show="product.soldOut">Out of Stock</span>
+                            <span x-show="!product.soldOut && !product.justAdded">Add to Cart</span>
+                            <span x-show="!product.soldOut && product.justAdded"><i class="fas fa-check mr-1"></i> Added</span>
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div x-show="filteredProducts.length === 0" class="text-center py-20 text-gray-400">
+            <i class="fas fa-search mb-4 text-3xl"></i>
+            <p class="text-sm font-bold uppercase tracking-widest">No products found</p>
+        </div>
+    </main>
+
+    <div x-show="cartOpen" class="fixed inset-0 z-[60]" style="display: none;">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="cartOpen = false" x-transition.opacity></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white p-6 overflow-y-auto flex flex-col shadow-2xl" 
+             x-transition:enter="transition ease-out duration-300 transform" 
+             x-transition:enter-start="translate-x-full" 
+             x-transition:enter-end="translate-x-0">
+            
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 class="text-xl font-black text-slate-900 uppercase">Your Crate</h2>
+                <button @click="cartOpen = false" class="text-3xl">&times;</button>
+            </div>
+
+            <div class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4" x-show="cart.length > 0">
+                <p class="text-[11px] text-blue-900 leading-relaxed font-medium">
+                    <i class="fas fa-info-circle mr-1 text-blue-600"></i> 
+                    <strong>How to order:</strong> Clicking checkout will copy your order details. Just <strong>Paste</strong> it in Messenger! 
+                    <span class="block mt-1 opacity-75 italic">You can also take a screenshot of this cart to message us.</span>
+                </p>
+            </div>
+
+            <div class="flex-1 space-y-6">
+                <template x-for="(item, index) in cart" :key="item.id">
+                    <div class="flex items-start border-b border-gray-100 pb-4">
+                        <img :src="item.image" class="w-12 h-12 object-contain mr-4 bg-gray-50 p-1 rounded-lg">
+                        <div class="flex-1">
+                            <p class="font-bold text-xs leading-tight mb-1" x-text="item.name"></p>
+                            <p class="text-[10px] text-gray-500 mb-2">₱<span x-text="item.price.toLocaleString()"></span> each</p>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center bg-gray-100 rounded-lg h-7">
+                                    <button @click="updateQty(index, -1)" class="px-3 text-gray-600 text-xs font-bold">-</button>
+                                    <span class="text-[10px] font-bold w-4 text-center" x-text="item.quantity"></span>
+                                    <button @click="updateQty(index, 1)" class="px-3 text-gray-600 text-xs font-bold">+</button>
+                                </div>
+                                <span class="font-bold text-xs">₱<span x-text="(item.price * item.quantity).toLocaleString()"></span></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="cart.length === 0" class="text-center py-20 text-gray-400">
+                    <p class="text-sm font-bold uppercase tracking-widest">Crate Empty</p>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-6 border-t" x-show="cart.length > 0">
+                <div x-show="totalSavings > 0" class="flex justify-between text-[11px] font-bold text-green-600 mb-1 uppercase tracking-tighter">
+                    <span>🔥 Total Savings:</span>
+                    <span>-₱<span x-text="totalSavings.toLocaleString()"></span></span>
+                </div>
+                
+                <div class="flex justify-between text-lg font-black mb-4">
+                    <span>Total:</span>
+                    <span>₱<span x-text="cartTotal"></span></span>
+                </div>
+                
+                <div class="relative grid grid-cols-4 gap-2">
+                    <div x-show="showCopiedToast" 
+                         x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0 -translate-y-2"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-200"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="absolute -top-12 left-0 right-0 flex justify-center pointer-events-none">
+                        <span class="bg-green-600 text-white text-[10px] font-black px-4 py-2 rounded-full shadow-xl uppercase tracking-wider">
+                            <i class="fas fa-check-circle mr-1"></i> Order Details Copied!
+                        </span>
+                    </div>
+
+                    <button @click="clearCart()" class="col-span-1 bg-gray-100 text-gray-400 hover:text-red-500 rounded-xl transition-colors">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <button @click="checkout()" class="col-span-3 bg-blue-600 text-white py-4 rounded-xl font-black text-sm shadow-lg hover:bg-blue-700 active:scale-95 transition-all">
+                        ORDER VIA MESSENGER
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
         function shop() {
             return {
                 cartOpen: false,
@@ -6,18 +214,141 @@
                 sortOrder: 'low',
                 currentCategory: 'All Products',
                 showCopiedToast: false,
+                // Added "On Sale" to categories
                 categories: ['All Products', 'On Sale', 'Pokemon TCG', 'One Piece TCG', 'Gundam TCG', 'Lorcana TCG', 'Magic The Gathering', 'Weiss Schwarz TCG', 'Dragonball TCG', 'Product Accessory'],
                 cart: [],
                 
                 products: [
-                    // ... (Product 1-10 remain the same)
-                    // Note: Ensure your "On Sale" items have an originalPrice property
+                    {
+                        id: 1,
+                        name: "Phantasmal Flames Booster Box",
+                        category: "Pokemon TCG",
+                        type: "Booster Box",
+                        set: "Phantasmal Flames",
+                        price: 15000, // Reduced price
+                        originalPrice: 16000, // Added original price
+                        image: "https://tcgplayer-cdn.tcgplayer.com/product/654137_in_1000x1000.jpg",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: false 
+                    },
+                    {
+                        id: 2,
+                        name: "Phantasmal Flames Elite Trainer Box",
+                        category: "Pokemon TCG",
+                        type: "ETB",
+                        set: "Phantasmal Flames",
+                        price: 5500,
+                        originalPrice: 5500,
+                        image: "https://tcgplayer-cdn.tcgplayer.com/product/654136_in_1000x1000.jpg",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: false 
+                    },
+                    {
+                        id: 3,
+                        name: "Prismatic Evolutions Booster Bundle",
+                        category: "Pokemon TCG",
+                        type: "Booster Bundle",
+                        set: "Prismatic Evolutions",
+                        price: 4200,
+                        image: "https://tcgplayer-cdn.tcgplayer.com/product/600518_in_1000x1000.jpg",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: true 
+                    },
+                    {
+                        id: 4,
+                        name: "PRE Booster Bundle Display (free Acrylic Case)",
+                        category: "Pokemon TCG",
+                        type: "Display Case",
+                        set: "Prismatic Evolutions",
+                        price: 60000,
+                        image: "https://tcgplayer-cdn.tcgplayer.com/product/610317_in_1000x1000.jpg",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: true 
+                    },
+                    {
+                        id: 5,
+                        name: "GCG Newtype Rising [GD-01] Case (JP)",
+                        category: "Gundam TCG",
+                        type: "Booster Box Case",
+                        set: "Newtype Rising [GD-01]",
+                        price: 34800,
+                        image: "https://www.gundam-gcg.com/gcg/bccard/asia-en/news/2025/05/02/8255768kkzrLLWCW/thumbnail_box_jp.webp",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: false 
+                    },
+                    {
+                        id: 6,
+                        name: "GCG Dual Impact [GD-02] Case (JP)",
+                        category: "Gundam TCG",
+                        type: "Booster Box Case",
+                        set: "Dual Impact [GD-02]",
+                        price: 34800,
+                        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr8DrGGHzKuKHycM2YMFp8JnBPh3Gb4zmAAueM1bpCVA&s=10",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: false 
+                    },
+                    {
+                        id: 7,
+                        name: "GCG Steel Requiem [GD-03] Case (JP)",
+                        category: "Gundam TCG",
+                        type: "Booster Box Case",
+                        set: "Steel Requiem [GD-03]",
+                        price: 34800,
+                        image: "https://www.hobbydigi.com/media/catalog/product/cache/image/700x700/e9c3970ab036de70892d86c6d221abfe/_/j/_japanese_ver_bandai_gundam_card_game_card_game_booster_pack_-_gd03-steel_requiem_original_box_of_24_stock_guaranteed__251216023540_1.jpg?src=seo",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: true 
+                    },
+                    {
+                        id: 8,
+                        name: "Mega Evolution Enhanced Booster Box",
+                        category: "Pokemon TCG",
+                        type: "Booster Box",
+                        set: "Mega Evolution",
+                        price: 15000, // Reduced price
+                        originalPrice: 16000, // Added original price
+                        image: "https://tcgplayer-cdn.tcgplayer.com/product/644298_in_1000x1000.jpg",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: true 
+                    },
+                    {
+                        id: 9,
+                        name: "Lorwyn Eclipsed Play Booster Box",
+                        category: "Magic The Gathering",
+                        type: "Booster Box",
+                        set:"Lorwyn Eclipsed",
+                        price: 8500, // Reduced price
+                        originalPrice: 10500, // Added original price
+                        image: "https://m.media-amazon.com/images/I/71fPQsW9USL.jpg",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: false 
+                    },
+                    {
+                        id: 10,
+                        name: "Phantasmal Flames Half Booster Box",
+                        category: "Pokemon TCG",
+                        type: "Half Booster Box",
+                        set: "Phantasmal Flames",
+                        price: 7500, // Reduced price
+                        originalPrice: 8700, // Added original price
+                        image: "https://storage.googleapis.com/images.pricecharting.com/xytsrke2nwumzkrv/1600.jpg",
+                        selectedQty: 1,
+                        justAdded: false,
+                        soldOut: false 
+                    },
                 ],
 
                 getCategoryCount(cat) {
                     if (cat === 'All Products') return this.products.length;
-                    // FIX: This ensures the "On Sale" button count matches the actual items on sale
-                    if (cat === 'On Sale') return this.products.filter(p => p.originalPrice && p.originalPrice > p.price).length;
+                    if (cat === 'On Sale') return this.products.filter(p => p.originalPrice).length;
                     return this.products.filter(p => p.category === cat).length;
                 },
 
@@ -30,8 +361,7 @@
                         if (this.currentCategory === 'All Products') {
                             matchesCategory = true;
                         } else if (this.currentCategory === 'On Sale') {
-                            // FIX: Logic check for sale items
-                            matchesCategory = !!(p.originalPrice && p.originalPrice > p.price);
+                            matchesCategory = !!p.originalPrice;
                         } else {
                             matchesCategory = p.category === this.currentCategory;
                         }
@@ -39,18 +369,90 @@
                         return matchesSearch && matchesCategory;
                     });
 
-                    // Sorting Logic
                     if (this.sortOrder === 'low') {
                         return items.sort((a, b) => a.price - b.price);
                     } else if (this.sortOrder === 'high') {
                         return items.sort((a, b) => b.price - a.price);
                     } else {
-                        // "Latest" sort uses the ID (higher ID = newer)
                         return items.sort((a, b) => b.id - a.id);
                     }
                 },
 
-                // Rest of your cart functions (addToCart, updateQty, checkout) remain identical...
+                addToCart(product) {
+                    if(product.soldOut) return;
+                    let existingItem = this.cart.find(item => item.id === product.id);
+                    if (existingItem) {
+                        existingItem.quantity += product.selectedQty;
+                    } else {
+                        this.cart.push({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            // Store original price in cart item to calculate savings later
+                            originalPrice: product.originalPrice || product.price,
+                            image: product.image,
+                            quantity: product.selectedQty
+                        });
+                    }
+                    product.justAdded = true;
+                    setTimeout(() => { product.justAdded = false; }, 1000);
+                    product.selectedQty = 1;
+                },
+
+                updateQty(index, change) {
+                    if (this.cart[index].quantity + change <= 0) {
+                        this.cart.splice(index, 1);
+                    } else {
+                        this.cart[index].quantity += change;
+                    }
+                },
+
+                clearCart() {
+                    if(confirm("Clear all items from your crate?")) {
+                        this.cart = [];
+                    }
+                },
+
+                // Getter to calculate total savings in cart
+                get totalSavings() {
+                    return this.cart.reduce((sum, item) => {
+                        if (item.originalPrice > item.price) {
+                            return sum + ((item.originalPrice - item.price) * item.quantity);
+                        }
+                        return sum;
+                    }, 0);
+                },
+
+                get cartTotal() {
+                    return this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString();
+                },
+
+                async checkout() {
+                    let orderSummary = "🛒 ORDER FROM CRATE DROP COLLECTIVE\n\n";
+                    this.cart.forEach(item => {
+                        orderSummary += `• ${item.quantity}x ${item.name} (₱${item.price.toLocaleString()} each) - ₱${(item.price * item.quantity).toLocaleString()}\n`;
+                    });
+                    
+                    if (this.totalSavings > 0) {
+                        orderSummary += `\n✨ YOU SAVED: ₱${this.totalSavings.toLocaleString()}`;
+                    }
+                    
+                    orderSummary += `\nTOTAL: ₱${this.cartTotal}`;
+
+                    try {
+                        await navigator.clipboard.writeText(orderSummary);
+                        this.showCopiedToast = true;
+                        setTimeout(() => { this.showCopiedToast = false; }, 3000);
+                        
+                        setTimeout(() => {
+                            window.open("https://m.me/cratedropcollective", "_blank");
+                        }, 800);
+                    } catch (err) {
+                        window.open("https://m.me/cratedropcollective", "_blank");
+                    }
+                }
             }
         }
     </script>
+</body>
+</html>
