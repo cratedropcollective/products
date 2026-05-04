@@ -1,217 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crate Drop Collective | Sealed Products</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        [x-cloak] { display: none !important; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
-</head>
-<body class="bg-gray-50 font-sans text-slate-900" x-data="shop()" x-cloak>
-
-    <nav class="bg-black text-white p-4 sticky top-0 z-50 shadow-2xl">
-        <div class="container mx-auto flex flex-wrap justify-between items-center gap-y-4">
-            <a href="https://cratedropcollective.github.io/" class="flex flex-col hover:opacity-80 transition-opacity shrink-0">
-                <span class="text-lg md:text-xl font-black tracking-tighter leading-none">CRATE DROP</span>
-                <span class="text-[10px] font-bold text-blue-500 tracking-[0.2em]">COLLECTIVE</span>
-            </a>
-
-            <div class="flex items-center space-x-1 md:space-x-3 order-last w-full justify-center md:w-auto md:order-none">
-                 <a href="https://cratedropcollective.github.io/" class="text-[10px] md:text-xs font-bold text-gray-400 hover:text-white uppercase tracking-wider transition-colors px-3 py-1.5 rounded-full hover:bg-white/10">Home</a>
-                 <a href="/products" class="text-[10px] md:text-xs font-bold text-white bg-white/20 px-4 py-1.5 rounded-full uppercase tracking-wider">Products</a>
-                 <a href="/preorder" class="text-[10px] md:text-xs font-bold text-gray-400 hover:text-white uppercase tracking-wider transition-colors px-3 py-1.5 rounded-full hover:bg-white/10">Preorder</a>
-            </div>
-
-            <button @click="cartOpen = true" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full flex items-center transition-all relative shrink-0">
-                <i class="fas fa-shopping-cart mr-2 text-xs text-white"></i>
-                <span class="font-bold text-xs text-white">₱<span x-text="cartTotal"></span></span>
-                <span x-show="cart.length > 0" class="absolute -top-1 -right-1 bg-red-500 text-[8px] w-4 h-4 flex items-center justify-center rounded-full border-2 border-black text-white" x-text="totalItems"></span>
-            </button>
-        </div>
-    </nav>
-
-    <div class="bg-white border-b border-gray-200 sticky top-[72px] md:top-[68px] z-40">
-        <div class="pt-4 px-4 container mx-auto flex flex-col md:flex-row gap-3">
-            <div class="relative flex-1">
-                <input type="text" x-model="searchQuery" placeholder="Search products..." 
-                       class="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl text-base md:text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                <i class="fas fa-search absolute left-4 top-3 text-gray-400 text-sm"></i>
-            </div>
-            <div class="relative min-w-[140px]">
-                <select x-model="sortOrder" 
-                        class="w-full h-full pl-4 pr-10 py-2 bg-gray-100 border-none rounded-xl text-xs font-bold uppercase appearance-none focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer">
-                    <option value="newest">Latest</option>
-                    <option value="low">Price: Low to High</option>
-                    <option value="high">Price: High to Low</option>
-                </select>
-                <i class="fas fa-chevron-down absolute right-4 top-3 text-gray-400 text-[10px] pointer-events-none"></i>
-            </div>
-        </div>
-
-        <div class="container mx-auto mt-2">
-            <div class="flex overflow-x-auto no-scrollbar px-4 py-3 space-x-2 whitespace-nowrap">
-                <template x-for="cat in categories" :key="cat">
-                    <button @click="currentCategory = cat" 
-                            :class="currentCategory === cat ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                            class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all flex items-center">
-                        <span x-text="cat"></span>
-                        <span class="ml-2 opacity-50 text-[9px]" x-text="`(${getCategoryCount(cat)})`"></span>
-                    </button>
-                </template>
-            </div>
-        </div>
-    </div>
-
-    <main class="container mx-auto py-6 px-2 md:px-4">
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-8">
-            <template x-for="product in filteredProducts" :key="product.id">
-                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all flex flex-col"
-                     :class="product.soldOut ? 'opacity-70' : ''">
-                    
-                    <div class="relative aspect-square bg-[#fdfdfd] flex items-center justify-center p-4 overflow-hidden"
-                         :class="product.soldOut ? 'grayscale' : ''">
-                        <img :src="product.image" :alt="product.name" 
-                             class="max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-500 hover:scale-105">
-                        
-                        <span x-show="!product.soldOut" class="absolute top-2 left-2 text-[8px] font-black bg-black/80 text-white px-1.5 py-0.5 rounded uppercase" x-text="product.type"></span>
-                        
-                        <template x-if="product.originalPrice && !product.soldOut">
-                            <span class="absolute top-2 right-2 text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded uppercase shadow-lg animate-pulse">SALE</span>
-                        </template>
-
-                        <span x-show="product.soldOut" class="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-black text-xs">SOLD OUT</span>
-                    </div>
-                    
-                    <div class="p-3 md:p-5 flex-1 flex flex-col">
-                        <p class="text-[8px] md:text-[10px] font-black text-blue-600 uppercase mb-1" x-text="product.set"></p>
-                        <h2 class="text-xs md:text-base font-bold leading-tight mb-2 h-8 md:h-12 overflow-hidden" x-text="product.name"></h2>
-                        
-                        <div class="flex items-baseline space-x-2 mb-3">
-                            <p class="text-sm md:text-xl font-black text-slate-900">₱<span x-text="product.price.toLocaleString()"></span></p>
-                            <template x-if="product.originalPrice">
-                                <p class="text-[10px] md:text-xs text-gray-400 line-through font-bold">₱<span x-text="product.originalPrice.toLocaleString()"></span></p>
-                            </template>
-                        </div>
-
-                        <div x-show="!product.soldOut" class="flex items-center space-x-1 mb-3">
-                            <div class="flex items-center border border-gray-300 rounded-lg px-1 h-7 bg-gray-50">
-                                <button @click="if(product.selectedQty > 1) product.selectedQty--" class="text-gray-500 px-2 font-bold">-</button>
-                                <span class="text-[10px] md:text-xs font-bold w-4 text-center" x-text="product.selectedQty"></span>
-                                <button @click="product.selectedQty++" class="text-gray-500 px-2 font-bold">+</button>
-                            </div>
-                        </div>
-
-                        <button @click="addToCart(product)" 
-                                :disabled="product.soldOut"
-                                :class="product.soldOut ? 'bg-gray-300' : (product.justAdded ? 'bg-green-500' : 'bg-slate-900 hover:bg-slate-800')"
-                                class="w-full h-9 rounded-lg text-white transition-all text-[10px] md:text-xs font-bold flex items-center justify-center uppercase mt-auto">
-                            <span x-show="product.soldOut">Out of Stock</span>
-                            <span x-show="!product.soldOut && !product.justAdded">Add to Crate</span>
-                            <span x-show="!product.soldOut && product.justAdded"><i class="fas fa-check mr-1"></i> Added</span>
-                        </button>
-                    </div>
-                </div>
-            </template>
-        </div>
-
-        <div x-show="filteredProducts.length === 0" class="text-center py-20 text-gray-400">
-            <i class="fas fa-search mb-4 text-3xl"></i>
-            <p class="text-sm font-bold uppercase tracking-widest">No products found</p>
-        </div>
-    </main>
-
-    <div x-show="cartOpen" class="fixed inset-0 z-[60]" style="display: none;">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="cartOpen = false" x-transition.opacity></div>
-        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white p-6 overflow-y-auto flex flex-col shadow-2xl" x-transition:enter="transition ease-out duration-300 transform translate-x-full" x-transition:enter-end="translate-x-0">
-            <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h2 class="text-xl font-black text-slate-900 uppercase">Your Crate</h2>
-                <button @click="cartOpen = false" class="text-3xl">&times;</button>
-            </div>
-
-            <div class="flex-1 space-y-6">
-                <template x-for="(item, index) in cart" :key="index">
-                    <div class="flex items-start border-b border-gray-100 pb-4">
-                        <img :src="item.image" class="w-12 h-12 object-contain mr-4 bg-gray-50 p-1 rounded-lg">
-                        <div class="flex-1">
-                            <p class="font-bold text-xs" x-text="item.name"></p>
-                            <p class="text-[9px] text-blue-500 font-bold uppercase mb-2" x-text="item.set"></p>
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center border rounded h-6 bg-gray-50">
-                                    <button @click="updateCartQty(index, -1)" class="px-2 text-xs font-bold">-</button>
-                                    <span class="text-[10px] font-black w-6 text-center" x-text="item.quantity"></span>
-                                    <button @click="updateCartQty(index, 1)" class="px-2 text-xs font-bold">+</button>
-                                </div>
-                                <div class="text-right">
-                                    <span class="font-black text-xs">₱<span x-text="(item.price * item.quantity).toLocaleString()"></span></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </div>
-
-            <div class="mt-6 pt-6 border-t space-y-4" x-show="cart.length > 0">
-                <div class="bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
-                    <div class="flex justify-between text-sm font-black text-blue-600 uppercase"><span>Total Amount:</span><span>₱<span x-text="cartTotal"></span></span></div>
-                </div>
-
-                <div class="grid grid-cols-1 gap-2">
-                    <button @click="confirmAndRedirect()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-xs uppercase shadow hover:bg-slate-800 transition-all">
-                        <i class="fab fa-facebook-messenger mr-2"></i> Assisted Checkout (Paste Order in Messenger)
-                    </button>
-                    <button @click="checkoutSelf()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase shadow hover:bg-blue-700 transition-all border-2 border-blue-400">
-                        <i class="fas fa-qrcode mr-2"></i> Self-Checkout (Pay via QR)
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="paymentModalOpen" class="fixed inset-0 z-[70]" style="display: none;">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click="paymentModalOpen = false" x-transition.opacity></div>
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4 border-b pb-4">
-                <h2 class="text-xl font-black text-slate-900 uppercase">Order Summary</h2>
-                <button @click="paymentModalOpen = false" class="text-3xl">&times;</button>
-            </div>
-
-            <div class="overflow-y-auto flex-1 no-scrollbar space-y-4">
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <template x-for="item in cart">
-                        <div class="mb-3 pb-3 border-b border-gray-200 last:border-0 last:pb-0">
-                            <div class="flex justify-between text-xs font-bold">
-                                <span><span x-text="item.quantity"></span>x <span x-text="item.name"></span></span>
-                                <span>₱<span x-text="(item.price * item.quantity).toLocaleString()"></span></span>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-
-                <div class="p-4 bg-blue-600 text-white rounded-xl shadow-inner text-center">
-                    <div class="text-[10px] font-bold uppercase opacity-80 mb-1">Total Amount Paid</div>
-                    <div class="text-3xl font-black tracking-tighter">₱<span x-text="cartTotal"></span></div>
-                </div>
-
-                <div class="text-center py-4 border-2 border-dashed border-gray-200 rounded-2xl">
-                    <p class="text-[11px] text-gray-500 mb-4 font-medium px-4">Pay via Instapay. <strong class="text-slate-800">TAKE A SCREENSHOT</strong> of this screen and your payment receipt.</p>
-                    <img src="https://www.image2url.com/r2/default/images/1777388590470-26cd0706-92f7-4a95-b141-0c218a530962.png" class="w-40 h-40 mx-auto rounded-lg">
-                    <p class="text-[11px] text-gray-500 mb-4 font-medium px-4">Orders amounting to <strong class="text-slate-800">₱50,000</strong> and above may settle via <strong class="text-slate-800">Private Message</strong>.</p>
-                </div>
-            </div>
-
-            <button @click="confirmAndRedirect()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-sm uppercase mt-4 shadow-lg">
-                Send Proof to Messenger
-            </button>
-        </div>
-    </div>
-
-    <script>
+<script>
     function shop() {
         return {
             // --- INITIAL STATE ---
@@ -222,19 +9,25 @@
             currentCategory: 'All Products',
             categories: ['All Products', 'On Sale', 'Gunpla Kits', 'Pokemon TCG', 'One Piece TCG', 'Riftbound TCG', 'Gundam TCG', 'Lorcana TCG', 'Magic The Gathering', 'Weiss Schwarz TCG', 'Dragonball TCG'],
             cart: [],
-            products: [], // Starts empty, populated by Google Sheets
+            products: [],
 
             // --- FETCH & PARSE TSV ---
             async init() {
-                const TSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQu6_etrFg2rG9FpaLsWEHaHdULafjhzq7h4ZmMU_U_ZbXp5j5Cu7eTLNpaK2N5eE3ZgtYusX4ze9k5/pub?gid=0&single=true&output=tsv'; // <--- PASTE YOUR GOOGLE SHEETS TSV LINK HERE
+                const TSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQu6_etrFg2rG9FpaLsWEHaHdULafjhzq7h4ZmMU_U_ZbXp5j5Cu7eTLNpaK2N5eE3ZgtYusX4ze9k5/pub?gid=0&single=true&output=tsv'; 
                 
                 try {
                     const response = await fetch(TSV_URL);
                     const data = await response.text();
                     
-                    // Split rows and filter out empty ones
                     const rows = data.split('\n').filter(row => row.trim() !== '');
-                    const headers = rows[0].split('\t').map(h => h.trim());
+                    const headers = rows[0].split('\t').map(h => h.trim().toLowerCase()); // Force headers to lowercase
+
+                    // Helper to remove commas/currency symbols before math
+                    const cleanNumber = (val) => {
+                        if (!val) return 0;
+                        const cleaned = val.toString().replace(/[^0-9.-]+/g, "");
+                        return parseFloat(cleaned) || 0;
+                    };
 
                     this.products = rows.slice(1).map((row, index) => {
                         const values = row.split('\t');
@@ -243,17 +36,16 @@
                             p[header] = values[i]?.trim();
                         });
 
-                        // Standardize data types
                         return {
                             id: parseInt(p.id) || index,
                             name: p.name,
                             category: p.category,
                             type: p.type,
                             set: p.set,
-                            price: parseFloat(p.price) || 0,
-                            originalPrice: p.originalPrice ? parseFloat(p.originalPrice) : null,
+                            price: cleanNumber(p.price),
+                            originalPrice: p.originalprice ? cleanNumber(p.originalprice) : null, // Note: originalprice is now lowercase
                             image: p.image,
-                            soldOut: p.soldOut?.toLowerCase() === 'true',
+                            soldOut: p.soldout?.toLowerCase() === 'true', // Note: soldout is now lowercase
                             selectedQty: 1,
                             justAdded: false
                         };
@@ -275,7 +67,7 @@
 
             get filteredProducts() {
                 return this.products.filter(p => {
-                    const matchesSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+                    const matchesSearch = p.name && p.name.toLowerCase().includes(this.searchQuery.toLowerCase());
                     let matchesCat = false;
                     
                     if (this.currentCategory === 'All Products') {
@@ -287,12 +79,11 @@
                     }
                     return matchesSearch && matchesCat;
                 }).sort((a, b) => {
-                    // Always push Sold Out to the bottom
                     if (a.soldOut !== b.soldOut) return a.soldOut - b.soldOut;
                     
                     if (this.sortOrder === 'low') return a.price - b.price;
                     if (this.sortOrder === 'high') return b.price - a.price;
-                    return b.id - a.id; // Newest
+                    return b.id - a.id;
                 });
             },
 
@@ -326,35 +117,33 @@
             },
 
             async confirmAndRedirect() {
-                    // 1. Generate and Copy the Order Summary
-                    let summary = "🛒 PRE ORDER SUMMARY\n-----------------\n";
-                    this.cart.forEach(i => {
-                        summary += `• ${i.quantity}x ${i.name} (${i.isCase ? 'CASE' : 'UNIT'})\n  ETA: ${i.eta}\n  DP (30%): ₱${(i.depositPrice * i.quantity).toLocaleString()}\n\n`;
-                    });
-                    summary += `TOTAL DOWNPAYMENT: ₱${this.cartDepositTotal}\n`;
-                    summary += `REMAINING BALANCE: ₱${this.cartBalanceTotal}\n`;
-                    summary += `STATUS: Payment Pending\n\n`;
-                    summary += `Pre-Orders are subject to country allocation.`;
+                // 1. Generate and Copy the Order Summary (FIXED FOR IN-STOCK PRODUCTS)
+                let summary = "🛒 ORDER SUMMARY\n-----------------\n";
+                this.cart.forEach(i => {
+                    summary += `• ${i.quantity}x ${i.name}\n  Price: ₱${(i.price * i.quantity).toLocaleString()}\n\n`;
+                });
+                
+                // Use standard cartTotal instead of missing deposit variables
+                summary += `TOTAL AMOUNT: ₱${this.cartTotal}\n`;
+                summary += `STATUS: Payment Pending\n`;
 
-                    try {
-                        await navigator.clipboard.writeText(summary);
-                    } catch (err) {
-                        console.error('Clipboard failed', err);
-                    }
+                try {
+                    await navigator.clipboard.writeText(summary);
+                } catch (err) {
+                    console.error('Clipboard failed', err);
+                }
 
-                    // 2. Platform Detection
-                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                // 2. Platform Detection
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-                    // 3. Conditional Redirection
-                    if (isIOS) {
-                        window.location.href = "fb-messenger://user-thread/745474078647634";
-                    } else {
-                        window.open("https://m.me/cratedropcollective", "_blank");
-                    }
-                } // End of confirmAndRedirect
-            } // End of return object
-        } // End of shop function
+                // 3. Conditional Redirection
+                if (isIOS) {
+                    window.location.href = "fb-messenger://user-thread/745474078647634";
+                } else {
+                    window.open("https://m.me/cratedropcollective", "_blank");
+                }
+            }
+        } 
+    }
     </script>
-</body>
-</html>
