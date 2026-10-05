@@ -89,6 +89,26 @@
         </div>
     </nav>
 
+    <!-- Category Nav -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="container mx-auto">
+            <div class="flex overflow-x-auto no-scrollbar divide-x divide-gray-100">
+                <template x-for="cat in availableCategories" :key="cat">
+                    <button @click="currentCategory = cat"
+                            class="flex flex-col items-center justify-start gap-2 shrink-0 w-24 md:w-28 px-3 py-3 border-b-2 transition-colors"
+                            :class="currentCategory === cat ? 'border-brandred bg-gray-50' : 'border-transparent hover:bg-gray-50'">
+                        <div class="h-10 md:h-12 w-full flex items-center justify-center">
+                            <img x-show="categoryLogos[cat]" :src="categoryLogos[cat]" class="max-h-full max-w-full object-contain">
+                            <i x-show="!categoryLogos[cat]" class="fas fa-layer-group text-gray-300 text-lg"></i>
+                        </div>
+                        <span class="text-[9px] font-bold uppercase tracking-wide text-center leading-tight"
+                              :class="currentCategory === cat ? 'text-brandred' : 'text-steel'" x-text="cat"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
+
     <!-- Hero -->
     <section class="bg-ink text-white relative overflow-hidden">
         <div class="container mx-auto px-4 py-10 md:py-14 text-center relative z-10">
@@ -122,19 +142,6 @@
                     <option value="high">Price: High to Low</option>
                 </select>
                 <i class="fas fa-chevron-down absolute right-4 top-3 text-gray-400 text-[10px] pointer-events-none"></i>
-            </div>
-        </div>
-
-        <div class="container mx-auto mt-2">
-            <div class="flex flex-wrap gap-2 px-4 py-3">
-                <template x-for="cat in availableCategories" :key="cat">
-                    <button @click="currentCategory = cat"
-                            :class="currentCategory === cat ? 'bg-brandred text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                            class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all flex items-center">
-                        <span x-text="cat"></span>
-                        <span class="ml-2 opacity-60 text-[9px]" x-text="`(${getCategoryCount(cat)})`"></span>
-                    </button>
-                </template>
             </div>
         </div>
     </div>
@@ -184,11 +191,16 @@
                             </template>
                         </div>
 
+                        <p x-show="!product.soldOut && product.available !== null"
+                           class="text-[10px] font-mono font-bold uppercase tracking-wider mb-2"
+                           :class="product.available <= 3 ? 'text-brandred' : 'text-steel'"
+                           x-text="product.available <= 3 ? 'Only ' + product.available + ' left' : product.available + ' in stock'"></p>
+
                         <div x-show="!product.soldOut" class="flex items-center space-x-1 mb-3">
                             <div class="flex items-center border border-gray-300 px-1 h-7 bg-gray-50">
                                 <button @click="if(product.selectedQty > 1) product.selectedQty--" class="text-gray-500 px-2 font-bold">-</button>
                                 <span class="text-[10px] md:text-xs font-bold w-4 text-center" x-text="product.selectedQty"></span>
-                                <button @click="product.selectedQty++" class="text-gray-500 px-2 font-bold">+</button>
+                                <button @click="if(product.available === null || product.selectedQty < product.available) product.selectedQty++" class="text-gray-500 px-2 font-bold">+</button>
                             </div>
                         </div>
 
@@ -242,6 +254,13 @@
             </div>
 
             <div class="mt-6 pt-6 border-t-2 border-gray-100 space-y-4" x-show="cart.length > 0">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-steel mb-1 tracking-wider">Facebook Name <span class="text-brandred">*</span></label>
+                    <input type="text" x-model="clientFacebookName" placeholder="e.g. Juan Dela Cruz"
+                           class="w-full p-2.5 bg-gray-50 border border-gray-300 text-xs font-bold outline-none focus:ring-2 focus:ring-brandblue panel-cut-sm">
+                    <p class="text-[9px] text-steel mt-1">So we can match your order to your Messenger thread.</p>
+                </div>
+
                 <div class="bg-gray-50 p-3 border border-dashed border-gray-300">
                     <div class="flex justify-between text-sm font-black text-brandred uppercase"><span>Total Amount:</span><span>₱<span x-text="cartTotal"></span></span></div>
                 </div>
@@ -307,6 +326,7 @@
         return {
             // --- INITIAL STATE ---
             cartOpen: false,
+            clientFacebookName: '',
             paymentModalOpen: false,
             searchQuery: '',
             sortOrder: 'newest',
@@ -314,23 +334,31 @@
             cart: [],
             products: [],
 
+            // --- CONFIG: fill these in (see setup steps) ---
+            productsTsvUrl: 'PASTE_YOUR_NEW_PRODUCTS_TSV_LINK_HERE',
+            holdsEndpoint: 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE', // live stock (GET) and checkout holds (POST)
+            categoriesTsvUrl: 'PASTE_YOUR_CATEGORIES_TSV_LINK_HERE', // optional — leave as-is to fall back to alphabetical order, no logos
+            categoryOrder: [],  // filled from the Categories sheet, top-to-bottom row order = left-to-right order
+            categoryLogos: {},  // filled from the Categories sheet: { 'Pokemon TCG': 'https://...' }
+
             // --- FETCH & PARSE TSV ---
             async init() {
-                const TSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQu6_etrFg2rG9FpaLsWEHaHdULafjhzq7h4ZmMU_U_ZbXp5j5Cu7eTLNpaK2N5eE3ZgtYusX4ze9k5/pub?gid=0&single=true&output=tsv'; 
-                
+                // Helper to remove commas/currency symbols before math
+                const cleanNumber = (val) => {
+                    if (!val) return 0;
+                    const cleaned = val.toString().replace(/[^0-9.-]+/g, "");
+                    return parseFloat(cleaned) || 0;
+                };
+
                 try {
-                    const response = await fetch(TSV_URL);
+                    const [response, catResponse] = await Promise.all([
+                        fetch(this.productsTsvUrl),
+                        fetch(this.categoriesTsvUrl).catch(() => null) // optional — a missing/unset tab just falls back to alphabetical
+                    ]);
                     const data = await response.text();
-                    
+
                     const rows = data.split('\n').filter(row => row.trim() !== '');
                     const headers = rows[0].split('\t').map(h => h.trim().toLowerCase()); // Force headers to lowercase
-
-                    // Helper to remove commas/currency symbols before math
-                    const cleanNumber = (val) => {
-                        if (!val) return 0;
-                        const cleaned = val.toString().replace(/[^0-9.-]+/g, "");
-                        return parseFloat(cleaned) || 0;
-                    };
 
                     this.products = rows.slice(1).map((row, index) => {
                         const values = row.split('\t');
@@ -339,22 +367,80 @@
                             p[header] = values[i]?.trim();
                         });
 
+                        // Stock tracking is opt-in per product: leave the "stock" cell
+                        // blank in the sheet and it behaves as before (unlimited).
+                        const hasStock = p.stock !== undefined && p.stock !== '';
+                        const stockCount = hasStock ? cleanNumber(p.stock) : null;
+                        const manualSoldOut = p.soldout?.toLowerCase() === 'true';
+
                         return {
                             id: parseInt(p.id) || index,
+                            sheetId: (p.id || '').trim(), // exact id text from the sheet; used to match holds
                             name: p.name,
                             category: p.category,
                             type: p.type,
                             set: p.set,
                             price: cleanNumber(p.price),
-                            originalPrice: p.originalprice ? cleanNumber(p.originalprice) : null, // Note: originalprice is now lowercase
+                            originalPrice: p.originalprice ? cleanNumber(p.originalprice) : null,
                             image: p.image,
-                            soldOut: p.soldout?.toLowerCase() === 'true', // Note: soldout is now lowercase
+                            stock: stockCount,
+                            available: stockCount !== null ? Math.max(0, stockCount) : null, // null = not tracked (unlimited)
+                            manualSoldOut: manualSoldOut,
+                            soldOut: manualSoldOut || (stockCount !== null && stockCount <= 0),
                             selectedQty: 1,
                             justAdded: false
                         };
                     });
+
+                    // Category display order (optional — see setup steps).
+                    // Row order in the sheet becomes left-to-right pill order.
+                    if (catResponse && catResponse.ok) {
+                        const catText = await catResponse.text();
+                        const catRows = catText.split('\n').filter(row => row.trim() !== '');
+                        if (catRows.length > 1) {
+                            const catHeaders = catRows[0].split('\t').map(h => h.trim().toLowerCase());
+                            const nameIdx = catHeaders.indexOf('category');
+                            const imgIdx = catHeaders.indexOf('image');
+                            catRows.slice(1).forEach(row => {
+                                const vals = row.split('\t');
+                                const name = nameIdx >= 0 ? (vals[nameIdx] || '').trim() : '';
+                                if (!name) return;
+                                this.categoryOrder.push(name);
+                                const img = imgIdx >= 0 ? (vals[imgIdx] || '').trim() : '';
+                                if (img) this.categoryLogos[name] = img;
+                            });
+                        }
+                    }
                 } catch (error) {
                     console.error("Error loading inventory:", error);
+                    return;
+                }
+
+                // Overlay the live stock count (pending holds are already taken out of it) and keep it fresh.
+                await this.refreshAvailability();
+                setInterval(() => this.refreshAvailability(), 60000);
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) this.refreshAvailability();
+                });
+            },
+
+            // Live stock from the Apps Script (not subject to publish caching).
+            // If it can't be reached, cards fall back to the raw stock number from the sheet.
+            async refreshAvailability() {
+                try {
+                    const res = await fetch(this.holdsEndpoint);
+                    const data = await res.json();
+                    if (!data || !data.ok) return;
+                    this.products.forEach(p => {
+                        if (p.stock === null) return;
+                        const live = data.available[p.sheetId];
+                        if (live !== undefined) {
+                            p.available = Math.max(0, live);
+                            p.soldOut = p.manualSoldOut || p.available <= 0;
+                        }
+                    });
+                } catch (err) {
+                    console.error('Live availability unavailable, using sheet stock:', err);
                 }
             },
 
@@ -368,16 +454,27 @@
                 return this.cart.reduce((sum, item) => sum + item.quantity, 0);
             },
 
+            // Pill order: "All Products" and "On Sale" pinned first, then whatever
+            // order the Categories sheet lists (row order = left-to-right), then any
+            // category not listed there, appended alphabetically. Every category shows
+            // up regardless of stock/sold-out status — including ones listed in the
+            // Categories sheet with no products yet — so nothing disappears or needs
+            // re-adding later. Clicking into an empty one just shows "No products found".
             get availableCategories() {
                 const cats = new Set();
                 this.products.forEach(p => {
-                    if (p.category && !p.soldOut) cats.add(p.category);
+                    if (p.category) cats.add(p.category);
                 });
+                this.categoryOrder.forEach(name => cats.add(name));
+
                 const result = ['All Products'];
-                if (this.products.some(p => p.originalPrice && !p.soldOut)) {
+                if (this.products.some(p => p.originalPrice)) {
                     result.push('On Sale');
                 }
-                return result.concat(Array.from(cats).sort());
+
+                const ordered = this.categoryOrder.filter(name => cats.has(name));
+                const leftover = Array.from(cats).filter(name => !this.categoryOrder.includes(name)).sort();
+                return result.concat(ordered, leftover);
             },
 
             get filteredProducts() {
@@ -412,10 +509,19 @@
 
             addToCart(product) {
                 const existing = this.cart.find(i => i.id === product.id);
+                let qtyToAdd = product.selectedQty;
+
+                if (product.available !== null) {
+                    const alreadyInCart = existing ? existing.quantity : 0;
+                    const room = product.available - alreadyInCart;
+                    qtyToAdd = Math.max(0, Math.min(qtyToAdd, room));
+                }
+                if (qtyToAdd <= 0) return; // nothing left to add
+
                 if (existing) {
-                    existing.quantity += product.selectedQty;
+                    existing.quantity += qtyToAdd;
                 } else {
-                    this.cart.push({ ...product, quantity: product.selectedQty });
+                    this.cart.push({ ...product, quantity: qtyToAdd });
                 }
                 product.justAdded = true;
                 setTimeout(() => product.justAdded = false, 1000);
@@ -423,18 +529,51 @@
             },
 
             updateCartQty(index, change) {
-                this.cart[index].quantity += change;
-                if (this.cart[index].quantity <= 0) this.cart.splice(index, 1);
+                const item = this.cart[index];
+                if (change > 0 && item.available !== null && item.quantity >= item.available) {
+                    return; // can't reserve more than what's actually available
+                }
+                item.quantity += change;
+                if (item.quantity <= 0) this.cart.splice(index, 1);
+            },
+
+            validateCheckout() {
+                if (!this.clientFacebookName.trim()) {
+                    alert('Please enter your Facebook Name first — we need it to match your order to your Messenger thread.');
+                    return false;
+                }
+                return true;
             },
 
             checkoutSelf() {
+                if (!this.validateCheckout()) return;
                 this.cartOpen = false;
                 this.paymentModalOpen = true;
             },
 
             async confirmAndRedirect() {
+                if (!this.validateCheckout()) return;
+
+                // 0. Record a stock hold for this checkout (Pending). Fired in the background
+                // (not awaited) so the clipboard copy and Messenger redirect still happen
+                // inside the customer's tap. keepalive lets it finish even if the page navigates.
+                // If it fails, checkout still proceeds; your manual payment check is the backstop.
+                if (this.cart.length > 0 && !this.holdsEndpoint.startsWith('PASTE_')) {
+                    fetch(this.holdsEndpoint, {
+                        method: 'POST',
+                        keepalive: true,
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
+                        body: JSON.stringify({
+                            customerName: this.clientFacebookName,
+                            items: this.cart.map(i => ({ id: i.sheetId, name: i.name, qty: i.quantity }))
+                        })
+                    }).then(() => this.refreshAvailability())
+                      .catch(err => console.error('Could not record stock hold (checkout still proceeds):', err));
+                }
+
                 // 1. Generate and Copy the Order Summary (FIXED FOR IN-STOCK PRODUCTS)
-                let summary = "🛒 ORDER SUMMARY\n-----------------\n";
+                let summary = "🛒 ORDER SUMMARY\n";
+                summary += `FB Name: ${this.clientFacebookName}\n-----------------\n`;
                 this.cart.forEach(i => {
                     summary += `• ${i.quantity}x ${i.name}\n  Price: ₱${(i.price * i.quantity).toLocaleString()}\n\n`;
                 });
