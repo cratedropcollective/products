@@ -36,6 +36,8 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         html, body { overflow-x: hidden; max-width: 100%; }
+        /* 'clip' blocks sideways overflow without turning body into a scroll container, which would break position: sticky */
+        @supports (overflow: clip) { html, body { overflow-x: clip; } }
         body { font-family: 'Poppins', sans-serif; touch-action: pan-y; overscroll-behavior-x: none; }
 
         .panel-cut { clip-path: polygon(0 14px, 14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); }
@@ -56,6 +58,13 @@
             transition: left 0.6s ease;
         }
         .cta-shimmer:hover::after { left: 130%; }
+
+        /* Category scroll hint */
+        @keyframes nudgeR { 0%,100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+        @keyframes nudgeL { 0%,100% { transform: translateX(0); } 50% { transform: translateX(-3px); } }
+        .cat-nudge-r { animation: nudgeR 1.6s ease-in-out infinite; }
+        .cat-nudge-l { animation: nudgeL 1.6s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .cat-nudge-r, .cat-nudge-l { animation: none; } }
     </style>
 </head>
 <body class="bg-paper font-body text-ink" x-data="shop()" x-cloak>
@@ -67,7 +76,7 @@
         <div class="bg-brandgold"></div>
     </div>
 
-    <nav class="bg-ink text-white p-4 sticky top-0 z-50 shadow-xl">
+    <nav id="topNav" class="bg-ink text-white p-4 sticky top-0 z-50 shadow-xl">
         <div class="container mx-auto flex flex-wrap justify-between items-center gap-y-4">
             <a href="https://cratedropcollective.github.io/" class="flex flex-col hover:opacity-80 transition-opacity shrink-0">
                 <span class="text-lg md:text-xl font-display font-bold tracking-tight leading-none uppercase">
@@ -89,15 +98,15 @@
         </div>
     </nav>
 
-    <!-- Category Nav -->
-    <div class="bg-white border-b border-gray-200">
-        <div class="container mx-auto">
-            <div class="flex overflow-x-auto no-scrollbar divide-x divide-gray-100">
+    <!-- Category Nav (sticky: stays under the top nav while scrolling) -->
+    <div id="catBar" class="bg-white border-b border-gray-200 sticky z-40 shadow-sm" style="top: var(--nav-h, 68px)">
+        <div class="container mx-auto relative">
+            <div x-ref="catScroll" @scroll.passive="updateCatFade()" class="flex overflow-x-auto no-scrollbar divide-x divide-gray-100">
                 <template x-for="cat in availableCategories" :key="cat">
-                    <button @click="currentCategory = cat"
-                            class="flex flex-col items-center justify-start gap-2 shrink-0 w-24 md:w-28 px-3 py-3 border-b-2 transition-colors"
+                    <button @click="currentCategory = cat; $el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })"
+                            class="flex flex-col items-center justify-start gap-1.5 md:gap-2 shrink-0 w-20 md:w-28 px-2 md:px-3 py-2 md:py-3 border-b-2 transition-colors"
                             :class="currentCategory === cat ? 'border-brandred bg-gray-50' : 'border-transparent hover:bg-gray-50'">
-                        <div class="h-10 md:h-12 w-full flex items-center justify-center">
+                        <div class="h-8 md:h-12 w-full flex items-center justify-center">
                             <img x-show="categoryLogos[cat]" :src="categoryLogos[cat]" class="max-h-full max-w-full object-contain">
                             <i x-show="!categoryLogos[cat]" class="fas fa-layer-group text-gray-300 text-lg"></i>
                         </div>
@@ -105,6 +114,14 @@
                               :class="currentCategory === cat ? 'text-brandred' : 'text-steel'" x-text="cat"></span>
                     </button>
                 </template>
+            </div>
+
+            <!-- Scroll hints: fade + nudging chevron on whichever side has more categories -->
+            <div x-show="catFadeLeft" x-transition.opacity class="pointer-events-none absolute left-0 top-0 bottom-0 w-9 bg-gradient-to-r from-white via-white/80 to-transparent flex items-center pl-1.5">
+                <i class="fas fa-chevron-left text-[10px] text-gray-400 cat-nudge-l"></i>
+            </div>
+            <div x-show="catFadeRight" x-transition.opacity class="pointer-events-none absolute right-0 top-0 bottom-0 w-9 bg-gradient-to-l from-white via-white/80 to-transparent flex items-center justify-end pr-1.5">
+                <i class="fas fa-chevron-right text-[10px] text-gray-400 cat-nudge-r"></i>
             </div>
         </div>
     </div>
@@ -129,7 +146,7 @@
         </div>
     </div>
 
-    <div class="bg-white border-b border-gray-200 sticky top-[68px] z-40">
+    <div id="searchBar" class="bg-white border-b border-gray-200 md:sticky z-30" style="top: calc(var(--nav-h, 68px) + var(--cat-h, 0px))">
         <div class="pt-4 px-4 container mx-auto flex flex-col md:flex-row gap-3">
             <div class="relative flex-1">
                 <input type="text" x-model="searchQuery" placeholder="Search products..."
@@ -176,6 +193,12 @@
                             </div>
                         </template>
 
+                        <div x-show="isLowStock(product)" class="absolute bottom-2 left-2 tag-slant bg-ink">
+                            <span class="flex items-center gap-1 text-[8px] font-mono font-bold text-brandgold px-2 py-0.5 uppercase tracking-widest">
+                                <span class="w-1.5 h-1.5 rounded-full bg-brandred animate-pulse"></span>Low Stock
+                            </span>
+                        </div>
+
                         <span x-show="product.soldOut" class="absolute inset-0 flex items-center justify-center bg-ink/50 text-white font-display font-bold text-xs uppercase tracking-widest">Sold Out</span>
                     </div>
 
@@ -193,16 +216,11 @@
                             </template>
                         </div>
 
-                        <p x-show="!product.soldOut && product.available !== null"
-                           class="text-[10px] font-mono font-bold uppercase tracking-wider mb-2"
-                           :class="product.available <= 3 ? 'text-brandred' : 'text-steel'"
-                           x-text="product.available <= 3 ? 'Only ' + product.available + ' left' : product.available + ' in stock'"></p>
-
                         <div x-show="!product.soldOut" class="flex items-center space-x-1 mb-3">
                             <div class="flex items-center border border-gray-300 px-1 h-7 bg-gray-50">
                                 <button @click="if(product.selectedQty > 1) product.selectedQty--" class="text-gray-500 px-2 font-bold">-</button>
                                 <span class="text-[10px] md:text-xs font-bold w-4 text-center" x-text="product.selectedQty"></span>
-                                <button @click="if(product.available === null || product.selectedQty < product.available) product.selectedQty++" class="text-gray-500 px-2 font-bold">+</button>
+                                <button @click="if(product.available === null || product.selectedQty < product.available) product.selectedQty++" class="text-gray-500 px-2 font-bold" :class="(product.available !== null && product.selectedQty >= product.available) ? 'opacity-30 cursor-not-allowed' : ''">+</button>
                             </div>
                         </div>
 
@@ -334,6 +352,9 @@
             searchQuery: '',
             sortOrder: 'newest',
             currentCategory: 'All Products',
+            catFadeLeft: false,
+            catFadeRight: false,
+            lowStockThreshold: 3, // show the "Low Stock" tag when remaining units <= this number
             cart: [],
             products: [],
 
@@ -346,6 +367,25 @@
 
             // --- FETCH & PARSE TSV ---
             async init() {
+                // Keep the sticky bars stacked correctly: measure the real nav / category bar heights
+                // (the top nav wraps to two rows on mobile, so a fixed offset doesn't hold).
+                const root = document.documentElement;
+                const syncBars = () => {
+                    const nav = document.getElementById('topNav');
+                    const cat = document.getElementById('catBar');
+                    if (nav) root.style.setProperty('--nav-h', nav.offsetHeight + 'px');
+                    if (cat) root.style.setProperty('--cat-h', cat.offsetHeight + 'px');
+                    this.updateCatFade();
+                };
+                if (window.ResizeObserver) {
+                    const ro = new ResizeObserver(syncBars);
+                    ['topNav', 'catBar'].forEach(id => { const el = document.getElementById(id); if (el) ro.observe(el); });
+                }
+                window.addEventListener('resize', syncBars);
+                syncBars();
+                // Re-check the scroll hint whenever the category list changes (sheet loads after first paint)
+                this.$watch('availableCategories', () => this.$nextTick(() => this.updateCatFade()));
+
                 // Helper to remove commas/currency symbols before math
                 const cleanNumber = (val) => {
                     if (!val) return 0;
@@ -503,6 +543,17 @@
             },
 
             // --- METHODS ---
+            updateCatFade() {
+                const el = this.$refs.catScroll;
+                if (!el) return;
+                this.catFadeLeft = el.scrollLeft > 4;
+                this.catFadeRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+            },
+
+            isLowStock(product) {
+                return !product.soldOut && product.available !== null && product.available <= this.lowStockThreshold;
+            },
+
             getCategoryCount(cat) {
                 const live = this.products.filter(p => !p.soldOut);
                 if (cat === 'All Products') return live.length;
